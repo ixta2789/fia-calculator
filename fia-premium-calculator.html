@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FIA Premium Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f6f4ee; --panel:#ffffff; --ink:#0a1628; --muted:#5a6578; --line:#d9d6cb;
+  --navy:#0a1628; --gold:#c9a84c; --gold-ink:#8a6d1c; --soft:#efe9d6; --bar:#c9a84c;
+  --serif:'Cormorant',Georgia,'Times New Roman',serif;
+  --sans:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a1628; --panel:#10213a; --ink:#f1ede0; --muted:#9fb0c8; --line:#26385a;
+    --gold-ink:#c9a84c; --soft:#16294a; --bar:#c9a84c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a1628; --panel:#10213a; --ink:#f1ede0; --muted:#9fb0c8; --line:#26385a;
+  --gold-ink:#c9a84c; --soft:#16294a; --bar:#c9a84c;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--gold);padding-bottom:14px;margin-bottom:24px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,44px);line-height:1.05;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:6px 0 0;max-width:60ch}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--navy);color:#f1ede0;border:1px solid var(--gold);padding:9px 16px;border-radius:6px;font-weight:600}
+.btn:hover{background:#13294a}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px}
+.panel h2{font-family:var(--serif);font-size:24px;margin:0 0 12px;font-weight:600}
+label{display:block;font-weight:600;font-size:13px;margin:14px 0 5px}
+.hint{font-weight:400;color:var(--muted);font-size:12px}
+input[type=number],select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;width:100%}
+.seg button{flex:1;padding:8px 6px;background:var(--bg);color:var(--ink);border:0;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--navy);color:#f1ede0;font-weight:600;box-shadow:inset 0 -3px 0 var(--gold)}
+.seg button:disabled{opacity:.5;cursor:not-allowed}
+.defaults{display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:6px;padding:10px 12px;margin-bottom:6px}
+.defaults input{width:18px;height:18px;accent-color:var(--gold)}
+.defaults span{font-weight:600}
+.adv{margin-top:6px;border-top:1px dashed var(--line);padding-top:4px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 8px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--muted);font-weight:600}
+.scroll{overflow-x:auto}
+.rates input{padding:6px 8px;text-align:right}
+.hero{background:var(--navy);color:#f1ede0;border-radius:8px;padding:24px;border-bottom:4px solid var(--gold)}
+.hero .k{font-size:13px;color:#b9c4d8}
+.hero .big{font-family:var(--serif);font-weight:600;font-size:clamp(44px,8vw,72px);line-height:1;margin:6px 0 10px;color:var(--gold)}
+.hero .facts{display:flex;gap:26px;flex-wrap:wrap;font-size:13px;color:#d7deea}
+.hero .facts b{display:block;font-size:17px;color:#fff;font-weight:600}
+.scen{margin-top:22px}
+.scen tr.sel td{background:var(--soft);font-weight:700}
+.bar{display:block;height:8px;background:var(--bar);border-radius:2px;min-width:2px}
+.barcell{width:22%;min-width:90px}
+.pos{color:#a3392b}.neg{color:#2f7a4d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pos{color:#ff9d8f}:root:not([data-theme="light"]) .neg{color:#7fd6a0}}
+.disc{margin-top:22px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;max-width:90ch}
+.assume{font-size:12px;color:var(--muted);margin-top:10px}
+@media print{
+  :root,:root[data-theme="dark"]{--bg:#fff;--panel:#fff;--ink:#0a1628;--muted:#444;--line:#bbb;--soft:#f1ead2;--gold-ink:#8a6d1c}
+  .noprint,.btn{display:none!important}
+  .grid{grid-template-columns:1fr}
+  .inputs{display:none}
+  .wrap{padding:0}
+  .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar,.sel td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .panel{border:0;padding:0}
+  .printsum{display:block!important}
+}
+.printsum{display:none;font-size:12px;color:var(--muted);margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Fixed Index Annuity Premium Calculator</h1>
+      <p class="sub">Estimate the premium needed to produce a target lifetime income, and compare different start ages.</p>
+    </div>
+    <button class="btn noprint" id="printBtn" type="button">Print / Save PDF</button>
+  </header>
+
+  <div class="grid">
+    <section class="panel inputs" aria-label="Inputs">
+      <h2>Inputs</h2>
+
+      <label>Income needed
+        <span class="hint">(enter monthly or annual)</span></label>
+      <div class="seg" id="periodSeg" role="group" aria-label="Income period">
+        <button type="button" data-v="monthly" aria-pressed="true">Monthly</button>
+        <button type="button" data-v="annual" aria-pressed="false">Annual</button>
+      </div>
+      <input type="number" id="income" min="0" step="100" value="5000" style="margin-top:8px" aria-label="Income amount in dollars">
+
+      <div class="row">
+        <div><label for="curAge">Current age</label><input type="number" id="curAge" min="18" max="90" value="60"></div>
+        <div><label for="startAge">Income start age</label><input type="number" id="startAge" min="18" max="100" value="65"></div>
+      </div>
+
+      <div class="defaults" style="margin-top:18px">
+        <input type="checkbox" id="useDefaults" checked>
+        <span>Use default assumptions</span>
+      </div>
+      <p class="hint" style="margin:4px 0 0">Uncheck to edit payout rates, roll-up, bonus and scenario range.</p>
+
+      <div class="adv">
+        <label>Payout rate type</label>
+        <div class="seg" id="rateSeg" role="group" aria-label="Payout rate type">
+          <button type="button" data-v="table" aria-pressed="true">Age table</button>
+          <button type="button" data-v="flat" aria-pressed="false">One flat rate</button>
+        </div>
+
+        <div id="flatBox" hidden>
+          <label for="flatRate">Flat payout rate (%)</label>
+          <input type="number" id="flatRate" step="0.05" min="0.1" value="5.5">
+        </div>
+
+        <div id="tableBox">
+          <label>Life option</label>
+          <div class="seg" id="lifeSeg" role="group" aria-label="Life option">
+            <button type="button" data-v="single" aria-pressed="true">Single life</button>
+            <button type="button" data-v="joint" aria-pressed="false">Joint life</button>
+          </div>
+          <label>Payout table <span class="hint">(rates between ages are interpolated)</span></label>
+          <div class="scroll rates">
+            <table id="rateTable">
+              <thead><tr><th>Start age</th><th>Single %</th><th>Joint %</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <label>Income base roll-up</label>
+        <div class="seg" id="rollSeg" role="group" aria-label="Roll-up">
+          <button type="button" data-v="on" aria-pressed="true">On</button>
+          <button type="button" data-v="off" aria-pressed="false">Off</button>
+        </div>
+        <div id="rollBox">
+          <div class="row">
+            <div><label for="rollRate">Roll-up rate (%)</label><input type="number" id="rollRate" step="0.25" min="0" value="7"></div>
+            <div><label for="rollYears">Max years</label><input type="number" id="rollYears" min="0" max="30" value="10"></div>
+          </div>
+          <label for="rollType">Growth type</label>
+          <select id="rollType"><option value="simple">Simple</option><option value="compound">Compound</option></select>
+        </div>
+
+        <div class="row">
+          <div><label for="bonus">Premium bonus (%)</label><input type="number" id="bonus" step="0.5" min="0" value="0"></div>
+          <div><label for="step">Scenario step</label>
+            <select id="step"><option value="1">1 year</option><option value="2">2 years</option><option value="5">5 years</option></select></div>
+        </div>
+        <div class="row">
+          <div><label for="fromAge">Scenario from age</label><input type="number" id="fromAge" min="18" max="100" value="55"></div>
+          <div><label for="toAge">Scenario to age</label><input type="number" id="toAge" min="18" max="100" value="75"></div>
+        </div>
+      </div>
+    </section>
+
+    <div>
+      <section class="hero" aria-live="polite">
+        <div class="k">Estimated premium needed</div>
+        <div class="big" id="outPremium">$0</div>
+        <div class="facts">
+          <div>Annual income<b id="outAnnual"></b></div>
+          <div>Monthly income<b id="outMonthly"></b></div>
+          <div>Payout rate<b id="outRate"></b></div>
+          <div>Income base factor<b id="outFactor"></b></div>
+          <div>Years to recoup premium<b id="outBreak"></b></div>
+        </div>
+      </section>
+      <div class="printsum" id="printSum"></div>
+
+      <section class="panel scen" aria-label="Start age scenarios">
+        <h2>Start age scenarios</h2>
+        <p class="hint" style="margin-top:-6px">Same income target, different start ages. The highlighted row matches your selected start age.</p>
+        <div class="scroll">
+          <table id="scenTable">
+            <thead><tr>
+              <th>Start age</th><th>Deferral yrs</th><th>Payout rate</th><th>Required premium</th><th>vs. selected</th><th>Years to recoup</th><th class="barcell" aria-hidden="true"></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="assume" id="assume"></p>
+      </section>
+    </div>
+  </div>
+
+  <p class="disc">Illustrative only, not a guarantee. This tool is for educational purposes and uses hypothetical payout rates, roll-up and bonus assumptions. Actual contract values, payout rates, fees and income vary by carrier, product, rider and issue date. It does not constitute a quote, product recommendation, or tax, legal or investment advice. Always confirm figures against the current carrier illustration.</p>
+</div>
+
+<script>
+(function(){
+  var DEF={
+    income:5000,period:'monthly',cur:60,start:65,
+    rateMode:'table',flat:5.5,life:'single',
+    table:[[55,4.5,4.0],[60,5.0,4.5],[65,5.5,5.0],[70,6.3,5.8],[75,7.0,6.5],[80,7.8,7.3]],
+    roll:'on',rollRate:7,rollYears:10,rollType:'simple',bonus:0,step:1,from:55,to:75
+  };
+  var S=JSON.parse(JSON.stringify(DEF));
+  var $=function(id){return document.getElementById(id)};
+  var usd=function(n){return isFinite(n)?n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}):'—'};
+  var num=function(id,fallback){var v=parseFloat($(id).value);return isFinite(v)?v:fallback};
+
+  function seg(id,key,onchange){
+    var el=$(id);
+    el.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b||b.disabled)return;
+      S[key]=b.dataset.v; syncSeg(id,S[key]); onchange&&onchange(); render();
+    });
+  }
+  function syncSeg(id,val){
+    Array.prototype.forEach.call($(id).querySelectorAll('button'),function(b){
+      b.setAttribute('aria-pressed',b.dataset.v===val?'true':'false');
+    });
+  }
+
+  function buildTable(){
+    var tb=$('rateTable').querySelector('tbody'); tb.innerHTML='';
+    S.table.forEach(function(r,i){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td><input type="number" aria-label="Age row '+(i+1)+'" data-i="'+i+'" data-c="0" value="'+r[0]+'" min="18" max="100"></td>'+
+        '<td><input type="number" aria-label="Single rate row '+(i+1)+'" data-i="'+i+'" data-c="1" step="0.05" value="'+r[1]+'"></td>'+
+        '<td><input type="number" aria-label="Joint rate row '+(i+1)+'" data-i="'+i+'" data-c="2" step="0.05" value="'+r[2]+'"></td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  function rateAt(age){
+    if(S.rateMode==='flat')return S.flat/100;
+    var col=S.life==='joint'?2:1;
+    var t=S.table.map(function(r){return [r[0],r[col]]}).filter(function(r){return isFinite(r[0])&&isFinite(r[1])}).sort(function(a,b){return a[0]-b[0]});
+    if(!t.length)return NaN;
+    if(age<=t[0][0])return t[0][1]/100;
+    if(age>=t[t.length-1][0])return t[t.length-1][1]/100;
+    for(var i=0;i<t.length-1;i++){
+      if(age>=t[i][0]&&age<=t[i+1][0]){
+        var f=(age-t[i][0])/(t[i+1][0]-t[i][0]);
+        return (t[i][1]+f*(t[i+1][1]-t[i][1]))/100;
+      }
+    }
+    return NaN;
+  }
+
+  function factor(startAge){
+    var yrs=S.roll==='on'?Math.min(Math.max(startAge-S.cur,0),S.rollYears):0;
+    var r=S.rollRate/100;
+    var g=S.rollType==='compound'?Math.pow(1+r,yrs):1+r*yrs;
+    return {yrs:yrs,deferral:Math.max(startAge-S.cur,0),g:g*(1+S.bonus/100)};
+  }
+
+  function premium(startAge,annual){
+    var f=factor(startAge),rt=rateAt(startAge);
+    return {prem:annual/(rt*f.g),rate:rt,f:f};
+  }
+
+  function read(){
+    S.income=num('income',0); S.cur=num('curAge',60); S.start=num('startAge',65);
+    S.flat=num('flatRate',5.5); S.rollRate=num('rollRate',0); S.rollYears=num('rollYears',0);
+    S.rollType=$('rollType').value; S.bonus=num('bonus',0);
+    S.step=Math.max(1,parseInt($('step').value,10)||1); S.from=num('fromAge',55); S.to=num('toAge',75);
+    var inputs=$('rateTable').querySelectorAll('input');
+    Array.prototype.forEach.call(inputs,function(el){
+      var v=parseFloat(el.value); if(isFinite(v))S.table[+el.dataset.i][+el.dataset.c]=v;
+    });
+  }
+
+  function render(){
+    var annual=S.period==='monthly'?S.income*12:S.income;
+    var main=premium(S.start,annual);
+    $('outPremium').textContent=usd(main.prem);
+    $('outAnnual').textContent=usd(annual);
+    $('outMonthly').textContent=usd(annual/12);
+    $('outRate').textContent=isFinite(main.rate)?(main.rate*100).toFixed(2)+'%':'—';
+    $('outFactor').textContent=main.f.g.toFixed(3)+'×';
+    $('outBreak').textContent=isFinite(main.prem)&&annual>0?(main.prem/annual).toFixed(1)+' yrs':'—';
+
+    var tb=$('scenTable').querySelector('tbody'); tb.innerHTML='';
+    var rows=[]; var maxP=0;
+    var from=Math.max(S.from,S.cur), to=S.to;
+    var ages=[]; for(var a=S.from;a<=to;a+=S.step){ if(a>=S.cur)ages.push(a); }
+    if(S.start>=from&&S.start<=to&&ages.indexOf(S.start)===-1)ages.push(S.start);
+    ages.sort(function(a,b){return a-b});
+    ages.forEach(function(a){
+      var p=premium(a,annual); rows.push({a:a,p:p}); if(isFinite(p.prem))maxP=Math.max(maxP,p.prem);
+    });
+    rows.forEach(function(r){
+      var d=r.p.prem-main.prem;
+      var diff=Math.abs(d)<1?'—':('<span class="'+(d>0?'pos':'neg')+'">'+(d>0?'+':'−')+usd(Math.abs(d))+'</span>');
+      var tr=document.createElement('tr'); if(r.a===S.start)tr.className='sel';
+      tr.innerHTML='<td>'+r.a+'</td><td>'+r.p.f.deferral+'</td><td>'+(isFinite(r.p.rate)?(r.p.rate*100).toFixed(2)+'%':'—')+'</td><td>'+usd(r.p.prem)+'</td><td>'+diff+'</td><td>'+(annual>0&&isFinite(r.p.prem)?(r.p.prem/annual).toFixed(1):'—')+'</td><td class="barcell" aria-hidden="true"><span class="bar" style="width:'+(maxP>0&&isFinite(r.p.prem)?Math.max(2,r.p.prem/maxP*100):0)+'%"></span></td>';
+      tb.appendChild(tr);
+    });
+    if(!rows.length){tb.innerHTML='<tr><td colspan="7" style="text-align:left">No scenario ages fall between your current age and the end of the range. Adjust the scenario range.</td></tr>';}
+
+    var parts=[];
+    parts.push(S.rateMode==='flat'?'Flat payout rate '+S.flat+'%':(S.life==='joint'?'Joint':'Single')+'-life payout table');
+    parts.push(S.roll==='on'?S.rollRate+'% '+S.rollType+' roll-up, up to '+S.rollYears+' yrs':'no roll-up');
+    if(S.bonus>0)parts.push(S.bonus+'% premium bonus');
+    parts.push('premium = annual income ÷ (payout rate × income base factor)');
+    $('assume').textContent='Assumptions: '+parts.join('; ')+'.';
+    $('printSum').textContent='Inputs: '+usd(S.income)+' '+S.period+' income, current age '+S.cur+', start age '+S.start+'. '+$('assume').textContent;
+  }
+
+  function applyDefaultsLock(){
+    var locked=$('useDefaults').checked;
+    if(locked){
+      var keep={income:S.income,period:S.period,cur:S.cur,start:S.start};
+      S=JSON.parse(JSON.stringify(DEF));
+      S.income=keep.income;S.period=keep.period;S.cur=keep.cur;S.start=keep.start;
+      $('flatRate').value=DEF.flat;$('rollRate').value=DEF.rollRate;$('rollYears').value=DEF.rollYears;
+      $('rollType').value=DEF.rollType;$('bonus').value=DEF.bonus;$('step').value=DEF.step;
+      $('fromAge').value=DEF.from;$('toAge').value=DEF.to;
+      buildTable();
+      ['rateSeg','lifeSeg','rollSeg'].forEach(function(id){syncSeg(id,{rateSeg:S.rateMode,lifeSeg:S.life,rollSeg:S.roll}[id])});
+      toggleBoxes();
+    }
+    var adv=$('rateSeg').closest('.adv');
+    Array.prototype.forEach.call(adv.querySelectorAll('input,select,button'),function(el){el.disabled=locked});
+  }
+
+  function toggleBoxes(){
+    $('flatBox').hidden=S.rateMode!=='flat';
+    $('tableBox').hidden=S.rateMode!=='table';
+    $('rollBox').hidden=S.roll!=='on';
+  }
+
+  seg('periodSeg','period');
+  seg('rateSeg','rateMode',toggleBoxes);
+  seg('lifeSeg','life');
+  seg('rollSeg','roll',toggleBoxes);
+
+  document.addEventListener('input',function(e){
+    if(e.target.id==='useDefaults')return;
+    if(e.target.closest('.inputs')){read();render();}
+  });
+  $('useDefaults').addEventListener('change',function(){read();applyDefaultsLock();render();});
+  $('printBtn').addEventListener('click',function(){window.print();});
+
+  buildTable(); toggleBoxes(); applyDefaultsLock(); read(); render();
+})();
+</script>
+</body>
+</html>
