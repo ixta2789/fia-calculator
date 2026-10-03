@@ -90,12 +90,24 @@ tr.sel td{background:var(--soft);font-weight:700}
     <section class="panel inputs" aria-label="Inputs">
       <h2>Inputs</h2>
 
-      <label>Income needed</label>
-      <div class="seg" id="periodSeg" role="group" aria-label="Income period">
-        <button type="button" data-v="monthly" aria-pressed="true">Monthly</button>
-        <button type="button" data-v="annual" aria-pressed="false">Annual</button>
+      <label>What do you want to find?</label>
+      <div class="seg" id="modeSeg" role="group" aria-label="Calculation mode">
+        <button type="button" data-v="premium" aria-pressed="true">Premium needed</button>
+        <button type="button" data-v="income" aria-pressed="false">Income from premium</button>
       </div>
-      <input type="number" id="income" min="0" step="100" value="5000" style="margin-top:8px" aria-label="Income amount in dollars">
+
+      <div id="incomeBox">
+        <label>Income needed</label>
+        <div class="seg" id="periodSeg" role="group" aria-label="Income period">
+          <button type="button" data-v="monthly" aria-pressed="true">Monthly</button>
+          <button type="button" data-v="annual" aria-pressed="false">Annual</button>
+        </div>
+        <input type="number" id="income" min="0" step="100" value="5000" style="margin-top:8px" aria-label="Income amount in dollars">
+      </div>
+      <div id="premBox" hidden>
+        <label for="premium">Premium</label>
+        <input type="number" id="premium" min="0" step="1000" value="500000">
+      </div>
 
       <div class="row">
         <div><label for="curAge">Current age</label><input type="number" id="curAge" min="18" max="90" value="60"></div>
@@ -130,15 +142,9 @@ tr.sel td{background:var(--soft);font-weight:700}
           </div>
         </div>
 
-        <label>Income base roll-up <span class="hint">(simple, during deferral)</span></label>
-        <div class="seg" id="rollSeg" role="group" aria-label="Roll-up">
-          <button type="button" data-v="on" aria-pressed="true">On</button>
-          <button type="button" data-v="off" aria-pressed="false">Off</button>
-        </div>
-        <div id="rollBox" class="row">
-          <div><label for="rollRate">Rate (%)</label><input type="number" id="rollRate" step="0.25" min="0" value="7"></div>
-          <div><label for="rollYears">Max years</label><input type="number" id="rollYears" min="0" max="30" value="10"></div>
-        </div>
+        <label for="mult">Income multiplier <span class="hint">(income ÷ premium × payout rate)</span></label>
+        <input type="number" id="mult" step="0.05" min="0.5" value="1">
+        <p class="hint" style="margin:4px 0 0">A single assumption standing in for any growth before income starts. 1.00 means none. Rider terms vary case by case.</p>
 
         <label for="credRate">Assumed interest credited (%) <span class="hint">for how long it lasts</span></label>
         <input type="number" id="credRate" step="0.25" min="0" value="3">
@@ -150,13 +156,13 @@ tr.sel td{background:var(--soft);font-weight:700}
 
     <div>
       <section class="hero" aria-live="polite">
-        <div class="k">Estimated premium needed</div>
+        <div class="k" id="outLabel">Estimated premium needed</div>
         <div class="big" id="outPremium">$0</div>
         <div class="facts">
-          <div>Monthly income<b id="outMonthly"></b></div>
-          <div>Annual income<b id="outAnnual"></b></div>
+          <div><span id="lab1">Monthly income</span><b id="outMonthly"></b></div>
+          <div><span id="lab2">Annual income</span><b id="outAnnual"></b></div>
           <div>Payout rate<b id="outRate"></b></div>
-          <div>Roll-up factor<b id="outFactor"></b></div>
+          <div>Income multiplier<b id="outFactor"></b></div>
         </div>
       </section>
       <div class="printsum" id="printSum"></div>
@@ -178,7 +184,7 @@ tr.sel td{background:var(--soft);font-weight:700}
         <p class="hint" style="margin-top:-4px">Same income target. Your selected age is highlighted.</p>
         <div class="scroll">
           <table id="scenTable">
-            <thead><tr><th>Start age</th><th>Deferral yrs</th><th>Payout rate</th><th>Required premium</th><th>vs. selected</th><th>Account runs out</th></tr></thead>
+            <thead><tr><th>Start age</th><th>Deferral yrs</th><th>Payout rate</th><th id="th4">Required premium</th><th>vs. selected</th><th>Account runs out</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -187,15 +193,15 @@ tr.sel td{background:var(--soft);font-weight:700}
     </div>
   </div>
 
-  <p class="disc">Illustrative only, not a guarantee. This tool is for education and uses hypothetical payout, roll-up and interest assumptions. Actual payout rates, fees, credited interest and income vary by carrier, product, rider and issue date, and index credits are not smooth from year to year. The "runs out" age assumes a constant credited rate and income taken at the start of each year; with a lifetime income rider, payments continue for life after the account value reaches zero, and without one they stop. This is not a quote, recommendation, or tax, legal or investment advice. Confirm all figures against a current carrier illustration.</p>
+  <p class="disc">Illustrative only, not a guarantee. This tool is for education and uses hypothetical payout, income multiplier and interest assumptions. Actual payout rates, fees, credited interest and income vary by carrier, product, rider and issue date, and index credits are not smooth from year to year. The "runs out" age assumes a constant credited rate and income taken at the start of each year; with a lifetime income rider, payments continue for life after the account value reaches zero, and without one they stop. This is not a quote, recommendation, or tax, legal or investment advice. Confirm all figures against a current carrier illustration.</p>
 </div>
 
 <script>
 (function(){
   var DEF={rateMode:'table',flat:5.5,
     table:[[55,4.5,4.0],[60,5.0,4.5],[65,5.5,5.0],[70,6.3,5.8],[75,7.0,6.5],[80,7.8,7.3]],
-    roll:'on',rollRate:7,rollYears:10,cred:3};
-  var S={period:'monthly',life:'single',income:5000,cur:60,start:65};
+    mult:1,cred:3};
+  var S={mode:'premium',period:'monthly',life:'single',income:5000,premium:500000,cur:60,start:65};
   Object.assign(S,JSON.parse(JSON.stringify(DEF)));
   var $=function(id){return document.getElementById(id)};
   var usd=function(n){return isFinite(n)?n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}):'—'};
@@ -214,7 +220,7 @@ tr.sel td{background:var(--soft);font-weight:700}
       tb.appendChild(tr);
     });
   }
-  function toggleBoxes(){$('flatBox').hidden=S.rateMode!=='flat';$('tableBox').hidden=S.rateMode!=='table';$('rollBox').hidden=S.roll!=='on'}
+  function toggleBoxes(){$('flatBox').hidden=S.rateMode!=='flat';$('tableBox').hidden=S.rateMode!=='table'}
 
   function rateAt(age){
     if(S.rateMode==='flat')return S.flat/100;
@@ -228,40 +234,44 @@ tr.sel td{background:var(--soft);font-weight:700}
     }
     return NaN;
   }
-  function calc(startAge,annual){
+  function baseAnnual(){return S.period==='monthly'?S.income*12:S.income}
+  function calc(startAge){
     var defer=Math.max(startAge-S.cur,0);
-    var yrs=S.roll==='on'?Math.min(defer,S.rollYears):0;
-    var g=1+(S.rollRate/100)*yrs;
-    var rate=rateAt(startAge);
-    var prem=annual/(rate*g);
-    // account value path (income at start of each year)
+    var g=S.mult;
+    var rate=rateAt(startAge), prem, annual;
+    if(S.mode==='premium'){annual=baseAnnual();prem=annual/(rate*g)}
+    else{prem=S.premium;annual=prem*rate*g}
     var c=S.cred/100, av=prem*Math.pow(1+c,defer), out=null, path=[];
     for(var age=startAge;age<=100;age++){
       path.push([age,av]);
       if(out===null&&av<annual){out=age}
       av=Math.max(av-annual,0)*(1+c);
     }
-    return {prem:prem,rate:rate,g:g,defer:defer,out:out,path:path};
+    return {prem:prem,annual:annual,rate:rate,g:g,defer:defer,out:out,path:path};
   }
 
   function read(){
-    S.income=num('income',0);S.cur=num('curAge',60);S.start=num('startAge',65);
-    S.flat=num('flatRate',5.5);S.rollRate=num('rollRate',0);S.rollYears=num('rollYears',0);S.cred=num('credRate',0);
+    S.income=num('income',0);S.premium=num('premium',0);S.cur=num('curAge',60);S.start=num('startAge',65);
+    S.flat=num('flatRate',5.5);S.mult=num('mult',1);S.cred=num('credRate',0);
     Array.prototype.forEach.call($('rateTable').querySelectorAll('input'),function(el){var v=parseFloat(el.value);if(isFinite(v))S.table[+el.dataset.i][+el.dataset.c]=v});
   }
 
   function render(){
-    var annual=S.period==='monthly'?S.income*12:S.income;
-    var m=calc(S.start,annual);
-    $('outPremium').textContent=usd(m.prem);
-    $('outMonthly').textContent=usd(annual/12);
+    var m=calc(S.start), annual=m.annual, pm=S.mode==='premium';
+    $('incomeBox').hidden=!pm;$('premBox').hidden=pm;
+    $('outLabel').textContent=pm?'Estimated premium needed':'Estimated monthly income';
+    $('outPremium').textContent=pm?usd(m.prem):usd(annual/12);
+    $('lab1').textContent=pm?'Monthly income':'Premium';
+    $('lab2').textContent='Annual income';
+    $('outMonthly').textContent=pm?usd(annual/12):usd(m.prem);
     $('outAnnual').textContent=usd(annual);
+    $('th4').textContent=pm?'Required premium':'Monthly income';
     $('outRate').textContent=isFinite(m.rate)?(m.rate*100).toFixed(2)+'%':'—';
     $('outFactor').textContent=m.g.toFixed(2)+'×';
 
     // how long it lasts
     var ll=$('lastLine');
-    if(!isFinite(m.prem)||annual<=0){ll.textContent='Enter an income amount to see this.'}
+    if(!isFinite(m.prem)||!isFinite(annual)||annual<=0){ll.textContent='Enter an amount to see this.'}
     else if(m.out===null){ll.innerHTML='At '+S.cred+'% credited, the account value lasts <b>past age 100</b>.'}
     else{ll.innerHTML='At '+S.cred+'% credited, the account value runs out at <b>age '+m.out+'</b> ('+(m.out-S.start)+' years of income).'}
     var tb=$('avTable').querySelector('tbody');tb.innerHTML='';
@@ -282,27 +292,28 @@ tr.sel td{background:var(--soft);font-weight:700}
     ages.sort(function(a,b){return a-b});
     var sb=$('scenTable').querySelector('tbody');sb.innerHTML='';
     ages.forEach(function(a){
-      var r=calc(a,annual),d=r.prem-m.prem;
-      var diff=Math.abs(d)<1?'—':'<span class="'+(d>0?'pos':'neg')+'">'+(d>0?'+':'−')+usd(Math.abs(d))+'</span>';
+      var r=calc(a),d=pm?r.prem-m.prem:(r.annual-m.annual)/12;
+      var good=pm?d<0:d>0;
+      var diff=Math.abs(d)<1?'—':'<span class="'+(good?'neg':'pos')+'">'+(d>0?'+':'−')+usd(Math.abs(d))+(pm?'':'/mo')+'</span>';
       var tr=document.createElement('tr');if(a===S.start)tr.className='sel';
-      tr.innerHTML='<td>'+a+'</td><td>'+r.defer+'</td><td>'+(isFinite(r.rate)?(r.rate*100).toFixed(2)+'%':'—')+'</td><td>'+usd(r.prem)+'</td><td>'+diff+'</td><td>'+(r.out===null?'Past 100':'Age '+r.out)+'</td>';
+      tr.innerHTML='<td>'+a+'</td><td>'+r.defer+'</td><td>'+(isFinite(r.rate)?(r.rate*100).toFixed(2)+'%':'—')+'</td><td>'+(pm?usd(r.prem):usd(r.annual/12)+'/mo')+'</td><td>'+diff+'</td><td>'+(r.out===null?'Past 100':'Age '+r.out)+'</td>';
       sb.appendChild(tr);
     });
     if(!ages.length)sb.innerHTML='<tr><td colspan="6" style="text-align:left">Set a current age below the start ages to compare.</td></tr>';
 
     var parts=[S.rateMode==='flat'?'flat payout rate '+S.flat+'%':(S.life==='joint'?'joint':'single')+'-life payout by age',
-      S.roll==='on'?S.rollRate+'% simple roll-up, up to '+S.rollYears+' years':'no roll-up',
-      S.cred+'% assumed credited interest','premium = annual income ÷ (payout rate × roll-up factor)'];
+      S.mult+'× income multiplier',
+      S.cred+'% assumed credited interest',pm?'premium = annual income ÷ (payout rate × multiplier)':'annual income = premium × payout rate × multiplier'];
     $('assume').textContent='Assumptions: '+parts.join('; ')+'.';
-    $('printSum').textContent='Inputs: '+usd(S.income)+' '+S.period+' income, current age '+S.cur+', start age '+S.start+'. '+$('assume').textContent;
+    $('printSum').textContent='Inputs: '+(pm?usd(S.income)+' '+S.period+' income':usd(S.premium)+' premium')+', current age '+S.cur+', start age '+S.start+'. '+$('assume').textContent;
   }
 
-  seg('periodSeg','period');seg('lifeSeg','life');seg('rateSeg','rateMode',toggleBoxes);seg('rollSeg','roll',toggleBoxes);
+  seg('modeSeg','mode');seg('periodSeg','period');seg('lifeSeg','life');seg('rateSeg','rateMode',toggleBoxes);
   document.addEventListener('input',function(e){if(e.target.closest('.inputs')){read();render()}});
   $('resetBtn').addEventListener('click',function(){
     Object.assign(S,JSON.parse(JSON.stringify(DEF)));
-    $('flatRate').value=DEF.flat;$('rollRate').value=DEF.rollRate;$('rollYears').value=DEF.rollYears;$('credRate').value=DEF.cred;
-    buildTable();syncSeg('rateSeg',S.rateMode);syncSeg('rollSeg',S.roll);toggleBoxes();render();
+    $('flatRate').value=DEF.flat;$('mult').value=DEF.mult;$('credRate').value=DEF.cred;
+    buildTable();syncSeg('rateSeg',S.rateMode);toggleBoxes();render();
   });
   $('printBtn').addEventListener('click',function(){window.print()});
   buildTable();toggleBoxes();read();render();
